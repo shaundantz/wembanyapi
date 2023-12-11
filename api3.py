@@ -31,6 +31,8 @@ def create_salary_table(cur, conn, headers, player_data):
     cur.execute(query)
     count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Players").fetchone()[0]
     for i in range(count, count + 25):
+        if i >= len(player_data):
+            break
         row = player_data[i]
         if row[1].find("'"):
             row[1] = row[1].replace("'", "'")
