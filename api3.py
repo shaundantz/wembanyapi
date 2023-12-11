@@ -29,31 +29,18 @@ def create_salary_table(cur, conn, headers, player_data):
     params[len(params) - 1] = params[len(params) - 1].replace(", ", "")
     query = f"CREATE TABLE IF NOT EXISTS Players (PLAYER_ID INTEGER PRIMARY KEY, NAME TEXT, TEAM_ID INTEGER, TEAM_ABBR TEXT, {''.join(params)})"
     cur.execute(query)
-    last_id = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Players").fetchone()[0]
-    for row in player_data:
-        add = [(index + ", ") for index in headers[5:]]
-        add[len(add) - 1] = add[len(add) - 1].replace(", ", "")
+    count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Players").fetchone()[0]
+    for i in range(count, count + 25):
+        row = player_data[i]
+        if row[1].find("'"):
+            row[1] = row[1].replace("'", "'")
+        row[1] = '"' + row[1] + '"'
+        row[4] = '"' + row[4] + '"'
         row = [str(index) + ", " for index in row]
         row = [row[0], row[1], row[3], row[4]] + row[5:]
         row[len(row) - 1] = row[len(row) - 1].replace(", ", "")
-        values = ["?, " for index in row]
-        values[len(values) - 1] = values[len(values) - 1].replace(", ", "")
-        add = "".join(add)
-        values = "".join(values)
-        row = "".join(row)
-        query = f"INSERT OR IGNORE INTO Players (PLAYER_ID, NAME, TEAM_ID, TEAM_ABBR, {add}) VALUES ({row}))"
-        print(query)
-        cur.execute(query, row)
-    conn.commit()
-
-
-def add_values(cur, conn, headers, player_data):
-    last_id = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Salaries").fetchone()[0]
-    for i in range(5, len()):
-        cur.execute(
-            "INSERT INTO Salaries (PLAYER_ID INTEGER PRIMARY KEY, NAME TEXT, TEAM_ID INTEGER, TEAM_ABBR TEXT, ) VALUES (?,?,?)",
-            (i + 1, salary_list[i][0], salary_list[i][1]),
-        )
+        query = f'INSERT OR IGNORE INTO Players VALUES ({"".join(row)})'
+        cur.execute(query)
     conn.commit()
 
 
