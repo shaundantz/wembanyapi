@@ -47,11 +47,62 @@ def add_values(cur, conn, salaries):
         cur.execute("INSERT INTO Salaries (player_id, name, salary) VALUES (?,?,?)", (i+1, salary_list[i][0], salary_list[i][1]))
     conn.commit()
 
+
 def main():
     salaries = get_salaries()
     cur, conn = set_up_database("nba.db")
     create_salary_table(cur, conn)
     add_values(cur, conn, salaries)
+import matplotlib.pyplot as plt
+
+# Connect to your SQLite database
+conn = sqlite3.connect('nba.db')
+cursor = conn.cursor()
+
+# Execute a query to get the top 25 player salaries
+query = """
+    SELECT name, salary
+    FROM Salaries
+    GROUP BY name
+    ORDER BY salary DESC
+    LIMIT 25;
+"""
+cursor.execute(query)
+
+# Fetch the data
+data = cursor.fetchall()
+
+# Separate the names and salaries for plotting
+names, salaries = zip(*data)
+
+# Close the database connection
+conn.close()
+#salaries_in_millions = [salary * 10 for salary in salaries]
+#print(salaries)
+
+salaries_in_millions = [salary / 1_000_000 for salary in salaries]
+
+
+# Create a bar graph
+plt.figure(figsize=(10, 6))
+plt.bar(names, salaries_in_millions, color='blue')
+plt.xlabel('Player Name')
+plt.ylabel('Salaries (in millions)')
+plt.title('Top 25 Player Salaries in 2023')
+plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
+plt.tight_layout()
+
+line_values = range(len(names))
+plt.plot(line_values, salaries_in_millions, marker='o', linestyle='-', color='red', label='Trendline')
+plt.legend()  # Show legend
+plt.tight_layout()
+
+# Show the plot
+plt.show()
+
+
+
+
 
 if __name__ == "__main__":
     main()
