@@ -27,7 +27,7 @@ def set_up_database(db_name):
 def create_salary_table(cur, conn, headers, player_data):
     params = [(index + " FLOAT, ") for index in headers[5:]]
     params[len(params) - 1] = params[len(params) - 1].replace(", ", "")
-    query = f"CREATE TABLE IF NOT EXISTS Players (PLAYER_ID INTEGER PRIMARY KEY, NAME TEXT, TEAM_ID INTEGER, TEAM_ABBR TEXT, {''.join(params)})"
+    query = f"CREATE TABLE IF NOT EXISTS Players (PLAYER_ID INTEGER PRIMARY KEY, NAME TEXT, TEAM_ID INTEGER, {''.join(params)})"
     cur.execute(query)
     count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Players").fetchone()[0]
     for i in range(count, count + 25):
@@ -35,9 +35,8 @@ def create_salary_table(cur, conn, headers, player_data):
         if row[1].find("'"):
             row[1] = row[1].replace("'", "'")
         row[1] = '"' + row[1] + '"'
-        row[4] = '"' + row[4] + '"'
         row = [str(index) + ", " for index in row]
-        row = [row[0], row[1], row[3], row[4]] + row[5:]
+        row = [row[0], row[1], row[3]] + row[5:]
         row[len(row) - 1] = row[len(row) - 1].replace(", ", "")
         query = f'INSERT OR IGNORE INTO Players VALUES ({"".join(row)})'
         cur.execute(query)
