@@ -1,5 +1,6 @@
 import sqlite3
 import matplotlib.pyplot as plt
+import numpy as np
 
 def calculate_composite_metric(ppg, games_played, field_goal_percentage, nba_fantasy_points, rebounding, assists, blocks, steals, pfd):
     # Define weights
@@ -53,25 +54,47 @@ def main():
 
     # Calculate the composite metric for each player and store in a list
     composite_metrics = []
+    pts_values = []
+
     for player_stats in player_data:
         player_name, fg_pct, pts, pfd, gp, reb, ast, stl, blk, nba_fantasy_pts = player_stats
 
         # Calculate the composite metric for each player
         composite_metric = calculate_composite_metric(pts, gp, fg_pct, nba_fantasy_pts, reb, ast, blk, stl, pfd)
-        composite_metrics.append((player_name, composite_metric))
+        composite_metrics.append(composite_metric)
+        pts_values.append(pts)
 
-    composite_metrics.sort(key=lambda x: x[1], reverse=True)
+    # Create bins for PTS values (inclusive at 0.0)
+    max_pts = max(pts_values)
+    bins = np.arange(0, max_pts + 6, 5)  # Start from 0 to include 0.0
 
-    # Extract the top 50 players and their composite metrics for plotting
-    top_50_players = composite_metrics[:50]
-    player_names, composite_metrics_values = zip(*top_50_players)
+    # If max_pts is a multiple of 5, add an extra bin for "max_pts+"
+    if max_pts % 5 == 0:
+        bins = np.append(bins, max_pts + 1)
 
-    # Create a bar graph
+    # Assign each player to a bin
+    bin_indices = np.digitize(pts_values, bins, right=True)
+
+    # Create a scatter plot with colored points for each bin
     plt.figure(figsize=(12, 8))
-    plt.barh(player_names, composite_metrics_values, color='blue')
+    for bin_index in np.unique(bin_indices):
+        indices = np.where(bin_indices == bin_index)
+        plt.scatter(
+            [composite_metrics[i] for i in indices[0]],
+            [pts_values[i] for i in indices[0]],
+            label=f'PTS {bins[bin_index - 1]}-{bins[bin_index]}', alpha=0.7
+        )
+
+    # Add trendline
+    z = np.polyfit(composite_metrics, pts_values, 1)
+    p = np.poly1d(z)
+    slope = z[0]
+    plt.plot(composite_metrics, p(composite_metrics), "k--", label=f'Trendline (Slope: {slope:.2f})')
+
     plt.xlabel('Composite Metric')
-    plt.ylabel('Player Name')
-    plt.title('Top 50 Players by Composite Metric')
+    plt.ylabel('Points per game')
+    plt.title('Players: Composite Metric vs Points per game (PPG)')
+    plt.legend()
     plt.tight_layout()
     plt.show()
 

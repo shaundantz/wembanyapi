@@ -55,7 +55,6 @@ def main():
     add_values(cur, conn, salaries)
 import matplotlib.pyplot as plt
 
-# Connect to your SQLite database
 conn = sqlite3.connect('nba.db')
 cursor = conn.cursor()
 
@@ -69,13 +68,10 @@ query = """
 """
 cursor.execute(query)
 
-# Fetch the data
 data = cursor.fetchall()
 
-# Separate the names and salaries for plotting
 names, salaries = zip(*data)
 
-# Close the database connection
 conn.close()
 #salaries_in_millions = [salary * 10 for salary in salaries]
 #print(salaries)
