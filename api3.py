@@ -24,7 +24,7 @@ def set_up_database(db_name):
     return cur, conn
 
 
-def create_salary_table(cur, conn, headers, player_data):
+def create_table(cur, conn, headers, player_data):
     params = [(index + " FLOAT, ") for index in headers[5:]]
     params[len(params) - 1] = params[len(params) - 1].replace(", ", "")
     query = f"CREATE TABLE IF NOT EXISTS Players (PLAYER_ID INTEGER PRIMARY KEY, NAME TEXT, TEAM_ID INTEGER, {''.join(params)})"
@@ -48,7 +48,7 @@ def create_salary_table(cur, conn, headers, player_data):
 def main():
     headers, player_data = get_player_data()
     cur, conn = set_up_database("nba.db")
-    create_salary_table(cur, conn, headers, player_data)
+    create_table(cur, conn, headers, player_data)
 
 
 if __name__ == "__main__":
