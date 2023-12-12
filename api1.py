@@ -77,8 +77,7 @@ def main():
     salaries = get_salaries()
     cursor, conn = set_up_database("nba.db")
     create_salary_table(cursor, conn)
-    for i in range(22):
-        add_values(cursor, conn, salaries)
+    add_values(cursor, conn, salaries)
 
 if __name__ == "__main__":
     main()
