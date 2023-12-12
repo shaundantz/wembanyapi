@@ -35,8 +35,8 @@ def fetch_player_data_from_database():
 
     # Execute a query to fetch player data from the Players table
     query = """
-        SELECT NAME, FG_PCT, PTS, PFD, GP, REB, AST, STL, BLK, NBA_FANTASY_PTS
-        FROM Players;
+        SELECT Players.NAME, Players.FG_PCT, Players.PTS, Players.PFD, Players.GP, Players.REB, Players.AST, Players.STL, Players.BLK, Players.NBA_FANTASY_PTS, Salaries.salary
+        FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id;
     """
     cursor.execute(query)
 
@@ -54,17 +54,17 @@ def main():
     # Calculate the composite metric for each player and store in a list
     composite_metrics = []
     for player_stats in player_data:
-        player_name, fg_pct, pts, pfd, gp, reb, ast, stl, blk, nba_fantasy_pts = player_stats
+        player_name, fg_pct, pts, pfd, gp, reb, ast, stl, blk, nba_fantasy_pts, salary = player_stats
 
         # Calculate the composite metric for each player
         composite_metric = calculate_composite_metric(pts, gp, fg_pct, nba_fantasy_pts, reb, ast, blk, stl, pfd)
-        composite_metrics.append((player_name, composite_metric))
+        composite_metrics.append((player_name, composite_metric, salary))
 
     composite_metrics.sort(key=lambda x: x[1], reverse=True)
 
     # Extract the top 50 players and their composite metrics for plotting
     top_50_players = composite_metrics[:50]
-    player_names, composite_metrics_values = zip(*top_50_players)
+    player_names, composite_metrics_values, salaries = zip(*top_50_players)
 
     # Create a bar graph
     plt.figure(figsize=(12, 8))
