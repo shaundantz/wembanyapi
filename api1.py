@@ -50,7 +50,7 @@ def add_values(cur, conn, salaries):
     salary_list = list(zip(salaries.keys(), salaries.values()))
     count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Salaries").fetchone()[0]
     index = 1
-    for i in range(count, len(salary_list)):
+    for i in range(count, count + 25):
         if i >= len(salary_list):
             break
         try:
