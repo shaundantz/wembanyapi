@@ -58,12 +58,10 @@ def main():
         composite_metric = calculate_composite_metric(pts, gp, fg_pct, nba_fantasy_pts, reb, ast, blk, stl, pfd)
         composite_metrics.append(composite_metric)
         
-        # Divide the salary by 1 million to display in millions
         salary_in_millions = salary / 1000000.0
         salaries.append(salary_in_millions)
         player_names.append(player_name)
 
-    # Sort players by composite metric
     sorted_players = sorted(zip(player_names, composite_metrics, salaries), key=lambda x: x[1], reverse=True)
     
     # Extract the top 10 players and their details
@@ -74,7 +72,6 @@ def main():
     plt.figure(figsize=(12, 8))
     plt.scatter(composite_metrics, salaries, color='orange', alpha=0.7)
 
-    # Annotate the top 10 players
     for i, name in enumerate(top_10_names):
         rotation_angle = 45 if name == 'Giannis Antetokounmpo' or name == 'Damian Lillard' else 0
         plt.text(top_10_metrics[i], top_10_salaries[i], name, fontsize=8, ha='right', va='bottom', rotation=rotation_angle)

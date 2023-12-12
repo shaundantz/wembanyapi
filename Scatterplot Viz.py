@@ -34,17 +34,14 @@ def fetch_player_data_from_database():
     conn = sqlite3.connect('nba.db')  
     cursor = conn.cursor()
 
-    # Execute a query to fetch player data from the Players table
     query = """
         SELECT NAME, FG_PCT, PTS, PFD, GP, REB, AST, STL, BLK, NBA_FANTASY_PTS
         FROM Players;
     """
     cursor.execute(query)
 
-    # Fetch the data
     player_data = cursor.fetchall()
 
-    # Close the database connection 
     conn.close()
 
     return player_data
@@ -85,7 +82,6 @@ def main():
             label=f'PTS {bins[bin_index - 1]}-{bins[bin_index]}', alpha=0.7
         )
 
-    # Add trendline
     z = np.polyfit(composite_metrics, pts_values, 1)
     p = np.poly1d(z)
     slope = z[0]

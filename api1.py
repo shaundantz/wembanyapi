@@ -105,7 +105,7 @@ def main():
     plt.xlabel("Player Name")
     plt.ylabel("Salaries (in millions)")
     plt.title("Top 25 Player Salaries in 2023")
-    plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better visibility
+    plt.xticks(rotation=45, ha="right")  
     plt.tight_layout()
 
     line_values = range(len(names))
@@ -117,7 +117,7 @@ def main():
         color="red",
         label="Trendline",
     )
-    plt.legend()  # Show legend
+    plt.legend()  
     plt.tight_layout()
 
     # Show the plot

@@ -33,17 +33,14 @@ def fetch_player_data_from_database():
     conn = sqlite3.connect('nba.db')  
     cursor = conn.cursor()
 
-    # Execute a query to fetch player data from the Players table
     query = """
         SELECT Players.NAME, Players.FG_PCT, Players.PTS, Players.PFD, Players.GP, Players.REB, Players.AST, Players.STL, Players.BLK, Players.NBA_FANTASY_PTS, Salaries.salary
         FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id;
     """
     cursor.execute(query)
 
-    # Fetch the data
     player_data = cursor.fetchall()
 
-    # Close the database connection 
     conn.close()
 
     return player_data
@@ -56,13 +53,11 @@ def main():
     for player_stats in player_data:
         player_name, fg_pct, pts, pfd, gp, reb, ast, stl, blk, nba_fantasy_pts, salary = player_stats
 
-        # Calculate the composite metric for each player
         composite_metric = calculate_composite_metric(pts, gp, fg_pct, nba_fantasy_pts, reb, ast, blk, stl, pfd)
         composite_metrics.append((player_name, composite_metric, salary))
 
     composite_metrics.sort(key=lambda x: x[1], reverse=True)
 
-    # Extract the top 50 players and their composite metrics for plotting
     top_50_players = composite_metrics[:50]
     player_names, composite_metrics_values, salaries = zip(*top_50_players)
 
