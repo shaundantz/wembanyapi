@@ -29,24 +29,68 @@ def calculate_composite_metric(ppg, games_played, field_goal_percentage, nba_fan
     )
     return composite_metric
 
-def fetch_player_data_from_database():
-    conn = sqlite3.connect('nba.db')  
-    cursor = conn.cursor()
-
+def fetch_player_data_from_database(conn, cursor):
     query = """
         SELECT Players.NAME, Players.FG_PCT, Players.PTS, Players.PFD, Players.GP, Players.REB, Players.AST, Players.STL, Players.BLK, Players.NBA_FANTASY_PTS, Salaries.salary
-        FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id;
+        FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id
     """
     cursor.execute(query)
 
     player_data = cursor.fetchall()
 
-    conn.close()
-
     return player_data
 
+def salary_visualization(conn,cursor):
+    # Execute a query to get the top 25 player salaries
+    query = """
+        SELECT Players.NAME, Salaries.salary
+        FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id
+        GROUP BY Players.NAME
+        ORDER BY Salaries.salary DESC
+        LIMIT 25;
+    """
+    cursor.execute(query)
+
+    data = cursor.fetchall()
+
+    names, salaries = zip(*data)
+
+    conn.close()
+    # salaries_in_millions = [salary * 10 for salary in salaries]
+    # print(salaries)
+
+    salaries_in_millions = [salary / 1_000_000 for salary in salaries]
+
+    # Create a bar graph
+    plt.figure(figsize=(10, 6))
+    plt.bar(names, salaries_in_millions, color="blue")
+    plt.xlabel("Player Name")
+    plt.ylabel("Salaries (in millions)")
+    plt.title("Top 25 Player Salaries in 2023")
+    plt.xticks(rotation=45, ha="right")  
+    plt.tight_layout()
+
+    line_values = range(len(names))
+    plt.plot(
+        line_values,
+        salaries_in_millions,
+        marker="o",
+        linestyle="-",
+        color="red",
+        label="Trendline",
+    )
+    plt.legend()  
+    plt.tight_layout()
+
+    # Show the plot
+    plt.show()
+
+
 def main():
-    player_data = fetch_player_data_from_database()
+    conn = sqlite3.connect('nba.db')  
+    cursor = conn.cursor()
+
+    player_data = fetch_player_data_from_database(conn, cursor)
 
     composite_metrics = []
     salaries = []
@@ -81,6 +125,8 @@ def main():
     plt.title('Players: Composite Metric vs Salary')
     plt.tight_layout()
     plt.show()
+
+    salary_visualization(conn, cursor)
 
 if __name__ == "__main__":
     main()
