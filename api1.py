@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import sqlite3
 import os
+import matplotlib.pyplot as plt
+
 
 def get_salaries():
     salaries = {}
@@ -28,7 +30,7 @@ def get_salaries():
             salary = player.find_all("td")[3].text.strip("$").replace(",", "")
             salaries[name] = salary
     return salaries
-    
+
 
 def set_up_database(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -36,68 +38,90 @@ def set_up_database(db_name):
     cur = conn.cursor()
     return cur, conn
 
+
 def create_salary_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS Salaries (player_id INTEGER PRIMARY KEY, name TEXT, salary INTEGER)")
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS Salaries (player_id INTEGER PRIMARY KEY, name TEXT, salary INTEGER)"
+    )
     conn.commit()
+
 
 def add_values(cur, conn, salaries):
     salary_list = list(zip(salaries.keys(), salaries.values()))
-    last_id = cur.execute("SELECT COALESCE(MAX(player_id),0) FROM Salaries").fetchone()[0]
-    for i in range(last_id,last_id+25):
-        cur.execute("INSERT INTO Salaries (player_id, name, salary) VALUES (?,?,?)", (i+1, salary_list[i][0], salary_list[i][1]))
+    count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Salaries").fetchone()[0]
+    index = 1
+    for i in range(count, len(salary_list)):
+        if i >= len(salary_list):
+            break
+        try:
+            id = (
+                cur.execute(
+                    "SELECT player_id FROM Players WHERE name = ?", ("OG Anunoby",)
+                ).fetchone()[0]
+                if salary_list[i][0].find("Anunoby") != -1
+                else cur.execute(
+                    "SELECT player_id FROM Players WHERE name = ?", (salary_list[i][0],)
+                ).fetchone()[0]
+            )
+        except:
+            id = index
+            index += 1
+        cur.execute(
+            "INSERT OR IGNORE INTO Salaries (player_id, name, salary) VALUES (?,?,?)",
+            (id, salary_list[i][0], salary_list[i][1]),
+        )
     conn.commit()
 
 
 def main():
     salaries = get_salaries()
-    cur, conn = set_up_database("nba.db")
-    create_salary_table(cur, conn)
-    add_values(cur, conn, salaries)
-import matplotlib.pyplot as plt
+    cursor, conn = set_up_database("nba.db")
+    create_salary_table(cursor, conn)
+    add_values(cursor, conn, salaries)
 
-conn = sqlite3.connect('nba.db')
-cursor = conn.cursor()
+    # Execute a query to get the top 25 player salaries
+    query = """
+        SELECT name, salary
+        FROM Salaries
+        GROUP BY name
+        ORDER BY salary DESC
+        LIMIT 25;
+    """
+    cursor.execute(query)
 
-# Execute a query to get the top 25 player salaries
-query = """
-    SELECT name, salary
-    FROM Salaries
-    GROUP BY name
-    ORDER BY salary DESC
-    LIMIT 25;
-"""
-cursor.execute(query)
+    data = cursor.fetchall()
 
-data = cursor.fetchall()
+    names, salaries = zip(*data)
 
-names, salaries = zip(*data)
+    conn.close()
+    # salaries_in_millions = [salary * 10 for salary in salaries]
+    # print(salaries)
 
-conn.close()
-#salaries_in_millions = [salary * 10 for salary in salaries]
-#print(salaries)
+    salaries_in_millions = [salary / 1_000_000 for salary in salaries]
 
-salaries_in_millions = [salary / 1_000_000 for salary in salaries]
+    # Create a bar graph
+    plt.figure(figsize=(10, 6))
+    plt.bar(names, salaries_in_millions, color="blue")
+    plt.xlabel("Player Name")
+    plt.ylabel("Salaries (in millions)")
+    plt.title("Top 25 Player Salaries in 2023")
+    plt.xticks(rotation=45, ha="right")  # Rotate x-axis labels for better visibility
+    plt.tight_layout()
 
+    line_values = range(len(names))
+    plt.plot(
+        line_values,
+        salaries_in_millions,
+        marker="o",
+        linestyle="-",
+        color="red",
+        label="Trendline",
+    )
+    plt.legend()  # Show legend
+    plt.tight_layout()
 
-# Create a bar graph
-plt.figure(figsize=(10, 6))
-plt.bar(names, salaries_in_millions, color='blue')
-plt.xlabel('Player Name')
-plt.ylabel('Salaries (in millions)')
-plt.title('Top 25 Player Salaries in 2023')
-plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
-plt.tight_layout()
-
-line_values = range(len(names))
-plt.plot(line_values, salaries_in_millions, marker='o', linestyle='-', color='red', label='Trendline')
-plt.legend()  # Show legend
-plt.tight_layout()
-
-# Show the plot
-plt.show()
-
-
-
+    # Show the plot
+    plt.show()
 
 
 if __name__ == "__main__":
