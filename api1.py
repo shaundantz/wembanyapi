@@ -41,7 +41,7 @@ def set_up_database(db_name):
 
 def create_salary_table(cur, conn):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS Salaries (player_id INTEGER PRIMARY KEY, name TEXT, salary INTEGER)"
+        "CREATE TABLE IF NOT EXISTS Salaries (player_id INTEGER PRIMARY KEY, salary INTEGER)"
     )
     conn.commit()
 
@@ -49,26 +49,26 @@ def create_salary_table(cur, conn):
 def add_values(cur, conn, salaries):
     salary_list = list(zip(salaries.keys(), salaries.values()))
     count = cur.execute("SELECT COALESCE(COUNT(*),0) FROM Salaries").fetchone()[0]
-    index = 1
+    index = cur.execute("SELECT COALESCE(MAX(player_id),0) FROM Salaries WHERE player_id < 2544").fetchone()[0] + 1
     for i in range(count, count + 25):
         if i >= len(salary_list):
             break
         try:
             id = (
                 cur.execute(
-                    "SELECT player_id FROM Players WHERE name = ?", ("OG Anunoby",)
+                    "SELECT player_id FROM Players WHERE NAME = ?", ("OG Anunoby",)
                 ).fetchone()[0]
                 if salary_list[i][0].find("Anunoby") != -1
                 else cur.execute(
-                    "SELECT player_id FROM Players WHERE name = ?", (salary_list[i][0],)
+                    "SELECT player_id FROM Players WHERE NAME = ?", (salary_list[i][0],)
                 ).fetchone()[0]
             )
         except:
             id = index
             index += 1
         cur.execute(
-            "INSERT OR IGNORE INTO Salaries (player_id, name, salary) VALUES (?,?,?)",
-            (id, salary_list[i][0], salary_list[i][1]),
+            "INSERT OR IGNORE INTO Salaries (player_id, salary) VALUES (?,?)",
+            (id, salary_list[i][1]),
         )
     conn.commit()
 
@@ -77,52 +77,8 @@ def main():
     salaries = get_salaries()
     cursor, conn = set_up_database("nba.db")
     create_salary_table(cursor, conn)
-    add_values(cursor, conn, salaries)
-
-    # Execute a query to get the top 25 player salaries
-    query = """
-        SELECT name, salary
-        FROM Salaries
-        GROUP BY name
-        ORDER BY salary DESC
-        LIMIT 25;
-    """
-    cursor.execute(query)
-
-    data = cursor.fetchall()
-
-    names, salaries = zip(*data)
-
-    conn.close()
-    # salaries_in_millions = [salary * 10 for salary in salaries]
-    # print(salaries)
-
-    salaries_in_millions = [salary / 1_000_000 for salary in salaries]
-
-    # Create a bar graph
-    plt.figure(figsize=(10, 6))
-    plt.bar(names, salaries_in_millions, color="blue")
-    plt.xlabel("Player Name")
-    plt.ylabel("Salaries (in millions)")
-    plt.title("Top 25 Player Salaries in 2023")
-    plt.xticks(rotation=45, ha="right")  
-    plt.tight_layout()
-
-    line_values = range(len(names))
-    plt.plot(
-        line_values,
-        salaries_in_millions,
-        marker="o",
-        linestyle="-",
-        color="red",
-        label="Trendline",
-    )
-    plt.legend()  
-    plt.tight_layout()
-
-    # Show the plot
-    plt.show()
-
+    for i in range(22):
+        add_values(cursor, conn, salaries)
 
 if __name__ == "__main__":
     main()
