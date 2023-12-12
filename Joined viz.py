@@ -33,17 +33,14 @@ def fetch_player_data_from_database():
     conn = sqlite3.connect('nba.db')  
     cursor = conn.cursor()
 
-    # Execute a query to fetch player data from the Players table
     query = """
         SELECT Players.NAME, Players.FG_PCT, Players.PTS, Players.PFD, Players.GP, Players.REB, Players.AST, Players.STL, Players.BLK, Players.NBA_FANTASY_PTS, Salaries.salary
         FROM Players JOIN Salaries ON Players.PLAYER_ID = Salaries.player_id;
     """
     cursor.execute(query)
 
-    # Fetch the data
     player_data = cursor.fetchall()
 
-    # Close the database connection 
     conn.close()
 
     return player_data
@@ -51,30 +48,42 @@ def fetch_player_data_from_database():
 def main():
     player_data = fetch_player_data_from_database()
 
-    # Calculate the composite metric for each player and store in a list
     composite_metrics = []
+    salaries = []
+    player_names = []
+
     for player_stats in player_data:
         player_name, fg_pct, pts, pfd, gp, reb, ast, stl, blk, nba_fantasy_pts, salary = player_stats
 
-        # Calculate the composite metric for each player
         composite_metric = calculate_composite_metric(pts, gp, fg_pct, nba_fantasy_pts, reb, ast, blk, stl, pfd)
-        composite_metrics.append((player_name, composite_metric, salary))
+        composite_metrics.append(composite_metric)
+        
+        # Divide the salary by 1 million to display in millions
+        salary_in_millions = salary / 1000000.0
+        salaries.append(salary_in_millions)
+        player_names.append(player_name)
 
-    composite_metrics.sort(key=lambda x: x[1], reverse=True)
+    # Sort players by composite metric
+    sorted_players = sorted(zip(player_names, composite_metrics, salaries), key=lambda x: x[1], reverse=True)
+    
+    # Extract the top 10 players and their details
+    top_10_players = sorted_players[:10]
+    top_10_names, top_10_metrics, top_10_salaries = zip(*top_10_players)
 
-    # Extract the top 50 players and their composite metrics for plotting
-    top_50_players = composite_metrics[:50]
-    player_names, composite_metrics_values, salaries = zip(*top_50_players)
-
-    # Create a bar graph
+    # Create a scatter plot
     plt.figure(figsize=(12, 8))
-    plt.barh(player_names, composite_metrics_values, color='blue')
+    plt.scatter(composite_metrics, salaries, color='orange', alpha=0.7)
+
+    # Annotate the top 10 players
+    for i, name in enumerate(top_10_names):
+        rotation_angle = 45 if name == 'Giannis Antetokounmpo' or name == 'Damian Lillard' else 0
+        plt.text(top_10_metrics[i], top_10_salaries[i], name, fontsize=8, ha='right', va='bottom', rotation=rotation_angle)
+
     plt.xlabel('Composite Metric')
-    plt.ylabel('Player Name')
-    plt.title('Top 50 Players by Composite Metric')
+    plt.ylabel('Salary (Millions)')
+    plt.title('Players: Composite Metric vs Salary')
     plt.tight_layout()
     plt.show()
-
 
 if __name__ == "__main__":
     main()
