@@ -1,5 +1,6 @@
 import sqlite3
 import matplotlib.pyplot as plt
+import csv
 
 def calculate_composite_metric(ppg, games_played, field_goal_percentage, nba_fantasy_points, rebounding, assists, blocks, steals, pfd):
     # Define weights
@@ -44,6 +45,14 @@ def fetch_player_data_from_database():
     conn.close()
 
     return player_data
+def write_to_csv(filename, data):
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ['Player Name', 'Composite Metric', 'Salary']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for player in data:
+            writer.writerow({'Player Name': player[0], 'Composite Metric': player[1], 'Salary': player[2]})
 
 def main():
     player_data = fetch_player_data_from_database()
@@ -59,9 +68,13 @@ def main():
     composite_metrics.sort(key=lambda x: x[1], reverse=True)
 
     top_50_players = composite_metrics[:50]
-    player_names, composite_metrics_values, salaries = zip(*top_50_players)
+
+    # Write to CSV file
+    csv_filename = 'all_players_metric.csv'
+    write_to_csv(csv_filename, composite_metrics)
 
     # Create a bar graph
+    player_names, composite_metrics_values, salaries = zip(*top_50_players)
     plt.figure(figsize=(12, 8))
     plt.barh(player_names, composite_metrics_values, color='blue')
     plt.xlabel('Composite Metric')
@@ -69,7 +82,6 @@ def main():
     plt.title('Top 50 Players by Composite Metric')
     plt.tight_layout()
     plt.show()
-
 
 if __name__ == "__main__":
     main()
